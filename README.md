@@ -1,8 +1,14 @@
 #Desktop indexing/search utility
 
+MIT License - https://opensource.org/licenses/MIT , Apoorv Kumar, 2012
+
 Written in Python
 
 Scans text files in a given folder and maintains a flatfile index sensitive to updates. The results are displayed in decreasing order of relevance. JS based intuitive and helpful UI. Maintains history. Intelligent suggestions based on past events. The results shown contains specific lines extracted from the file so that user can check the context in which the keyword has been used.
+
+Check out more here - http://eat-sleep-code.blogspot.in/p/my-coding-projects.html
+
+
 
 ###To install (on linux machine with say XAMPP server) 
 
