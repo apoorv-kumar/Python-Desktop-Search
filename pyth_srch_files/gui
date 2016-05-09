@@ -1,0 +1,322 @@
+#! /usr/bin/python
+
+import cgitb; cgitb.enable() #to handle errors
+import os
+
+def get_suggestion_array():
+	
+	#get from index
+	list_words = [] # final word list from index
+	file_index = open(os.path.abspath('index.txt') , 'r')
+	for line in file_index.readlines():
+		list_words.append(line.split()[0].strip())
+	
+	#get from history
+	f_history = open(os.path.abspath('history') , 'r')
+
+	if f_history == None:
+		print "error - cannot open file" 
+	
+	
+	list_history = f_history.readlines()
+	for entry in list_history:
+		entry.strip()
+		#print '##' + entry + '##'
+		if entry in list_words:
+			pass
+		else:
+			list_words.append(entry)
+	words_js_array = str(list_words) #words in javascript array format
+	
+	return words_js_array
+
+
+#static texts ----------------------------------------------------------------
+
+auto_suggest_script_part1 = ''' <script language="JavaScript" type="text/javascript">
+function autoCompleteDB()
+{
+	this.aNames=new Array();
+}
+
+autoCompleteDB.prototype.assignArray=function(aList)
+{
+	this.aNames=aList;
+};
+
+autoCompleteDB.prototype.getMatches=function(str,aList,maxSize)
+{
+	/* debug */ //alert(maxSize+"ok getmatches");
+	var ctr=0;
+	for(var i in this.aNames)
+	{
+		if(this.aNames[i].toLowerCase().indexOf(str.toLowerCase())==0) /*looking for case insensitive matches */
+		{
+			aList.push(this.aNames[i]);
+			ctr++;
+		}
+		if(ctr==(maxSize-1)) /* counter to limit no of matches to maxSize */
+			break;
+	}
+};
+
+function autoComplete(aNames,oText,oDiv,maxSize)
+{
+
+	this.oText=oText;
+	this.oDiv=oDiv;
+	this.maxSize=maxSize;
+	this.cur=-1;
+
+	
+	/*debug here */
+	//alert(oText+","+this.oDiv);
+	
+	this.db=new autoCompleteDB();
+	this.db.assignArray(aNames);
+	
+	oText.onkeyup=this.keyUp;
+	oText.onkeydown=this.keyDown;
+	oText.autoComplete=this;
+	oText.onblur=this.hideSuggest;
+}
+
+autoComplete.prototype.hideSuggest=function()
+{
+	this.autoComplete.oDiv.style.visibility="hidden";
+};
+
+autoComplete.prototype.selectText=function(iStart,iEnd)
+{
+	if(this.oText.createTextRange) /* For IE */
+	{
+		var oRange=this.oText.createTextRange();
+		oRange.moveStart("character",iStart);
+		oRange.moveEnd("character",iEnd-this.oText.value.length);
+		oRange.select();
+	}
+	else if(this.oText.setSelectionRange) /* For Mozilla */
+	{
+		this.oText.setSelectionRange(iStart,iEnd);
+	}
+	this.oText.focus();
+};
+
+autoComplete.prototype.textComplete=function(sFirstMatch)
+{
+	if(this.oText.createTextRange || this.oText.setSelectionRange)
+	{
+		var iStart=this.oText.value.length;
+		this.oText.value=sFirstMatch;
+		this.selectText(iStart,sFirstMatch.length);
+	}
+};
+
+autoComplete.prototype.keyDown=function(oEvent)
+{
+	oEvent=window.event || oEvent;
+	iKeyCode=oEvent.keyCode;
+
+	switch(iKeyCode)
+	{
+		case 38: //up arrow
+			this.autoComplete.moveUp();
+			break;
+		case 40: //down arrow
+			this.autoComplete.moveDown();
+			break;
+		case 13: //return key
+			window.focus();
+			break;
+	}
+};
+
+autoComplete.prototype.moveDown=function()
+{
+	if(this.oDiv.childNodes.length>0 && this.cur<(this.oDiv.childNodes.length-1))
+	{
+		++this.cur;
+		for(var i=0;i<this.oDiv.childNodes.length;i++)
+		{
+			if(i==this.cur)
+			{
+				this.oDiv.childNodes[i].className="over";
+				this.oText.value=this.oDiv.childNodes[i].innerHTML;
+			}
+			else
+			{
+				this.oDiv.childNodes[i].className="";
+			}
+		}
+	}
+};
+
+autoComplete.prototype.moveUp=function()
+{
+	if(this.oDiv.childNodes.length>0 && this.cur>0)
+	{
+		--this.cur;
+		for(var i=0;i<this.oDiv.childNodes.length;i++)
+		{
+			if(i==this.cur)
+			{
+				this.oDiv.childNodes[i].className="over";
+				this.oText.value=this.oDiv.childNodes[i].innerHTML;
+			}
+			else
+			{
+				this.oDiv.childNodes[i].className="";
+			}
+		}
+	}
+};
+
+autoComplete.prototype.keyUp=function(oEvent)
+{
+	oEvent=oEvent || window.event;
+	var iKeyCode=oEvent.keyCode;
+	if(iKeyCode==8 || iKeyCode==46)
+	{
+		this.autoComplete.onTextChange(false); /* without autocomplete */
+	}
+	else if (iKeyCode <= 32 || (iKeyCode >= 33 && iKeyCode <= 46) || (iKeyCode >= 112 && iKeyCode <= 123)) 
+	{
+        //ignore
+    } 
+	else 
+	{
+		this.autoComplete.onTextChange(true); /* with autocomplete */
+	}
+};
+
+autoComplete.prototype.positionSuggest=function() /* to calculate the appropriate poistion of the dropdown */
+{
+	var oNode=this.oText;
+	var x=0,y=oNode.offsetHeight;
+
+	while(oNode.offsetParent && oNode.offsetParent.tagName.toUpperCase() != 'BODY')
+	{
+		x+=oNode.offsetLeft;
+		y+=oNode.offsetTop;
+		oNode=oNode.offsetParent;
+	}
+
+	x+=oNode.offsetLeft;
+	y+=oNode.offsetTop;
+
+	this.oDiv.style.top=y+"px";
+	this.oDiv.style.left=x+"px";
+}
+
+autoComplete.prototype.onTextChange=function(bTextComplete)
+{
+	var txt=this.oText.value;
+	var oThis=this;
+	this.cur=-1;
+	
+	if(txt.length>0)
+	{
+		while(this.oDiv.hasChildNodes())
+			this.oDiv.removeChild(this.oDiv.firstChild);
+		
+		var aStr=new Array();
+		this.db.getMatches(txt,aStr,this.maxSize);
+		if(!aStr.length) {this.hideSuggest ;return}
+		if(bTextComplete) this.textComplete(aStr[0]);
+		this.positionSuggest();
+		
+		for(i in aStr)
+		{
+			var oNew=document.createElement('div');
+			this.oDiv.appendChild(oNew);
+			oNew.onmouseover=
+			oNew.onmouseout=
+			oNew.onmousedown=function(oEvent)
+			{
+				oEvent=window.event || oEvent;
+				oSrcDiv=oEvent.target || oEvent.srcElement;
+
+				//debug :window.status=oEvent.type;
+				if(oEvent.type=="mousedown")
+				{
+					oThis.oText.value=this.innerHTML;
+				}
+				else if(oEvent.type=="mouseover")
+				{
+					this.className="over";
+				}
+				else if(oEvent.type=="mouseout")
+				{
+					this.className="";
+				}
+				else
+				{
+					this.oText.focus();
+				}
+			};
+			oNew.innerHTML=aStr[i];
+		}
+		
+		this.oDiv.style.visibility="visible";
+	}
+	else
+	{
+		this.oDiv.innerHTML="";
+		this.oDiv.style.visibility="hidden";
+	}
+};
+
+function createAutoComplete()
+{
+var aNames = '''
+	
+auto_suggest_script_part2 = ''';
+
+new autoComplete(aNames,document.getElementById('txt'),document.getElementById('suggest'),10);
+}
+</script>
+ '''
+auto_suggest_script_array = get_suggestion_array()
+
+final_suggestion_script = auto_suggest_script_part1 + auto_suggest_script_array + auto_suggest_script_part2
+	
+
+header_data = ''' <link rel="stylesheet" type="text/css" href="../../static/cssverticalmenu.css" />
+
+<script type="text/javascript" src="../../static/cssverticalmenu.js">
+
+</script>
+ '''
+
+# --------------------------------------------------------------------------------
+
+
+	
+	
+
+print "Content-type: text/html"
+print 
+
+print "<html>"
+print "<title>string search</title>"
+print header_data
+
+print final_suggestion_script
+	
+print '''<body align='center' background=../../static/img.jpg onLoad="createAutoComplete();">'''
+
+print "<br><h1 align=center><b><font color=orange>Enter search string</b></h1></font><br>"
+
+
+print "<form autocomplete=off action=\"get_string\" method=POST>"
+print '''<div align=center><input type=text name=input_str id="txt" style="border:#000000 1px solid;width:350px;" autocomplete=off>'''
+print '''<div id="suggest" align="left" style="visibility:hidden;border:#000000 1px solid;width:350px;"></div>'''
+print "<input type=submit name=submit value=\"search\">"
+print "</form></div>"
+print "<form action='print_history.py'>"
+print "<input type=submit name=history value='view history'>"
+print "</form>"
+print "</body>"
+print "<hr/>"
+print "</html>"
+ 

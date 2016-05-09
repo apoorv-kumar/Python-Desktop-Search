@@ -1,0 +1,29 @@
+#! /usr/bin/python
+
+print "Content-type: text/html"
+print ""
+print "<h1>SEARCH RESULTS</h1>"
+print "<a href=gui>Go back</a><br><br>"
+print "<form action=get_string method=POST>"
+print "<input type=text name=input_str>"
+print "<input type=submit name=submit value=search>"
+print "</form>"
+import cgi
+import cgitb; cgitb.enable() #to handle errors
+import search_type
+
+form=cgi.FieldStorage() #instantiate only once
+name=form.getfirst('input_str')
+mode=form.getfirst('menu')
+
+#Avoid script injection escaping the user input
+name=cgi.escape(str(name))
+
+
+name=str(name)	#get search string 
+mode=str(mode)
+
+#call to process string:
+search_type.normal_srch(name)
+        
+		

@@ -1,0 +1,13 @@
+The role of architecture
+[edit] Computer architecture: the definition
+The coordination of abstract levels of a processor under changing forces, involving design, measurement and evaluation. It also includes the overall fundamental working principle of the internal logical structure of a computer system.
+It can also be defined as the design of the task-performing part of computers, i.e. how various gates and transistors are interconnected and are caused to function per the instructions given by an assembly language programmer.
+Instruction set architecture
+
+   1. The ISA is the interface between the software and hardware.
+   2. It is the set of instructions that bridges the gap between high level languages and the hardware.
+   3. For a processor to understand a command, it should be in binary and not in High Level Language. The ISA encodes these values.
+   4. The ISA also defines the items in the computer that are available to a programmer. For example, it defines data types, registers, addressing modes, memory organization etc.
+   5. Register are high Addressing modes are the ways in which the instructions locate their operands.
+Memory organization defines how instructions interact with the memory.
+[edit]
